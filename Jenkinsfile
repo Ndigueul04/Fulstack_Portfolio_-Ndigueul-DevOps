@@ -43,8 +43,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '🚀 Déploiement des conteneurs...'
-                sh "docker compose -f docker-compose.yml down"
-                sh "docker compose -f docker-compose.yml up -d"
+                sh "docker-compose -f docker-compose.yml down"
+                sh "docker-compose -f docker-compose.yml up -d"
             }
         }
     }
