@@ -52,7 +52,6 @@ pipeline {
             steps {
                 echo '🚀 Déploiement des conteneurs...'
 
-                // Arrêter tous les conteneurs qui utilisent le port 80 et 5000
                 sh 'docker stop portfolio-web || true'
                 sh 'docker rm portfolio-web || true'
                 sh 'docker stop portfolio-frontend || true'
@@ -91,9 +90,15 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline terminé avec succès !'
+            mail to: 'serignecheikhndigueulfaye@gmail.com',
+                 subject: "✅ Pipeline réussi : ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Bonjour,\n\nLe pipeline ${env.JOB_NAME} build #${env.BUILD_NUMBER} a réussi !\n\nVoir les détails : ${env.BUILD_URL}\n\nCordialement,\nJenkins"
         }
         failure {
             echo '❌ Pipeline échoué !'
+            mail to: 'serignecheikhndigueulfaye@gmail.com',
+                 subject: "❌ Pipeline échoué : ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Bonjour,\n\nLe pipeline ${env.JOB_NAME} build #${env.BUILD_NUMBER} a échoué !\n\nVoir les détails : ${env.BUILD_URL}\n\nCordialement,\nJenkins"
         }
     }
 }
