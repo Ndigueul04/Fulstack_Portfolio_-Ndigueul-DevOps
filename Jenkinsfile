@@ -52,29 +52,36 @@ pipeline {
             steps {
                 echo '🚀 Déploiement des conteneurs...'
 
-                echo '🛑 Arrêt de l ancien conteneur backend...'
+                // Arrêter tous les conteneurs qui utilisent le port 80 et 5000
+                sh 'docker stop portfolio-web || true'
+                sh 'docker rm portfolio-web || true'
+                sh 'docker stop portfolio-frontend || true'
+                sh 'docker rm portfolio-frontend || true'
+                sh 'docker stop portfolio-api || true'
+                sh 'docker rm portfolio-api || true'
                 sh 'docker stop portfolio-backend || true'
-
-                echo '🗑️ Suppression de l ancien conteneur backend...'
                 sh 'docker rm portfolio-backend || true'
 
-                echo '🛑 Arrêt de l ancien conteneur frontend...'
-                sh 'docker stop portfolio-frontend || true'
-
-                echo '🗑️ Suppression de l ancien conteneur frontend...'
-                sh 'docker rm portfolio-frontend || true'
-
-                echo '📥 Récupération de la nouvelle image backend...'
+                echo '📥 Récupération des nouvelles images...'
                 sh 'docker pull cfaye876/portfolio-backend:latest'
-
-                echo '📥 Récupération de la nouvelle image frontend...'
                 sh 'docker pull cfaye876/portfolio-frontend:latest'
 
                 echo '▶️ Lancement du nouveau conteneur backend...'
-                sh 'docker run -d --name portfolio-backend --restart unless-stopped -p 5000:5000 cfaye876/portfolio-backend:latest'
+                sh '''docker run -d \
+                    --name portfolio-backend \
+                    --restart unless-stopped \
+                    --network devops_portfolio-net \
+                    -e MONGO_URI=mongodb://mongodb:27017/portfolio \
+                    -e PORT=5000 \
+                    cfaye876/portfolio-backend:latest'''
 
                 echo '▶️ Lancement du nouveau conteneur frontend...'
-                sh 'docker run -d --name portfolio-frontend --restart unless-stopped -p 80:80 cfaye876/portfolio-frontend:latest'
+                sh '''docker run -d \
+                    --name portfolio-frontend \
+                    --restart unless-stopped \
+                    --network devops_portfolio-net \
+                    -p 80:80 \
+                    cfaye876/portfolio-frontend:latest'''
 
                 echo '✅ Conteneurs déployés avec succès !'
             }
