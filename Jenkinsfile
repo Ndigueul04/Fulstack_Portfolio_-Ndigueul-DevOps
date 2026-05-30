@@ -69,8 +69,8 @@ pipeline {
                 sh '''docker run -d \
                     --name portfolio-backend \
                     --restart unless-stopped \
-                    --network devops_portfolio-net \
-                    -e MONGO_URI=mongodb://mongodb:27017/portfolio \
+                    --network docker_portfolio-net \
+                    -e MONGODB_URI=mongodb://portfolio-mongo:27017/portfolio \
                     -e PORT=5000 \
                     cfaye876/portfolio-backend:latest'''
 
@@ -78,7 +78,7 @@ pipeline {
                 sh '''docker run -d \
                     --name portfolio-frontend \
                     --restart unless-stopped \
-                    --network devops_portfolio-net \
+                    --network docker_portfolio-net \
                     -p 80:80 \
                     cfaye876/portfolio-frontend:latest'''
 
