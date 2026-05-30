@@ -89,7 +89,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline terminé avec succès !'
+            echo '✅ Pipeline terminée avec succès !'
             mail to: 'serignecheikhndigueulfaye@gmail.com',
                  subject: "✅ Pipeline réussi : ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                  body: "Bonjour,\n\nLe pipeline ${env.JOB_NAME} build #${env.BUILD_NUMBER} a réussi !\n\nVoir les détails : ${env.BUILD_URL}\n\nCordialement,\nJenkins"
