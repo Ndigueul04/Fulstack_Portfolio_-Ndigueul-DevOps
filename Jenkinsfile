@@ -21,13 +21,15 @@ pipeline {
             steps {
                 echo '🔍 Analyse de la qualité du code...'
                 withSonarQubeEnv('sonarqube') {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=portfolio \
-                        -Dsonar.projectName="Portfolio FullStack" \
-                        -Dsonar.sources=. \
-                        -Dsonar.exclusions=**/node_modules/**,**/dist/**
-                    '''
+                    withEnv(["PATH+SONAR=${tool 'sonar-scanner'}/bin"]) {
+                        sh '''
+                            sonar-scanner \
+                            -Dsonar.projectKey=portfolio \
+                            -Dsonar.projectName="Portfolio FullStack" \
+                            -Dsonar.sources=. \
+                            -Dsonar.exclusions=**/node_modules/**,**/dist/**
+                        '''
+                    }
                 }
             }
         }
