@@ -6,6 +6,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'cfaye876'
         BACKEND_IMAGE = "${DOCKERHUB_USERNAME}/portfolio-backend"
         FRONTEND_IMAGE = "${DOCKERHUB_USERNAME}/portfolio-frontend"
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
     }
 
     stages {
@@ -74,9 +75,9 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Docker') {
             steps {
-                echo '🚀 Déploiement des conteneurs...'
+                echo '🚀 Déploiement des conteneurs Docker...'
 
                 sh 'docker stop portfolio-web || true'
                 sh 'docker rm portfolio-web || true'
@@ -87,11 +88,9 @@ pipeline {
                 sh 'docker stop portfolio-backend || true'
                 sh 'docker rm portfolio-backend || true'
 
-                echo '📥 Récupération des nouvelles images...'
                 sh 'docker pull cfaye876/portfolio-backend:latest'
                 sh 'docker pull cfaye876/portfolio-frontend:latest'
 
-                echo '▶️ Lancement du nouveau conteneur backend...'
                 sh '''docker run -d \
                     --name portfolio-backend \
                     --restart unless-stopped \
@@ -100,7 +99,6 @@ pipeline {
                     -e PORT=5000 \
                     cfaye876/portfolio-backend:latest'''
 
-                echo '▶️ Lancement du nouveau conteneur frontend...'
                 sh '''docker run -d \
                     --name portfolio-frontend \
                     --restart unless-stopped \
@@ -108,7 +106,19 @@ pipeline {
                     -p 80:80 \
                     cfaye876/portfolio-frontend:latest'''
 
-                echo '✅ Conteneurs déployés avec succès !'
+                echo '✅ Conteneurs Docker déployés avec succès !'
+            }
+        }
+
+        stage('Deploy Kubernetes') {
+            steps {
+                echo '☸️ Déploiement sur Kubernetes...'
+                sh 'kubectl --kubeconfig=/var/jenkins_home/.kube/config apply -f k8s/mongodb-deployment.yaml'
+                sh 'kubectl --kubeconfig=/var/jenkins_home/.kube/config apply -f k8s/backend-deployment.yaml'
+                sh 'kubectl --kubeconfig=/var/jenkins_home/.kube/config apply -f k8s/frontend-deployment.yaml'
+                sh 'kubectl --kubeconfig=/var/jenkins_home/.kube/config rollout restart deployment/backend'
+                sh 'kubectl --kubeconfig=/var/jenkins_home/.kube/config rollout restart deployment/frontend'
+                echo '✅ Déploiement Kubernetes réussi !'
             }
         }
     }
