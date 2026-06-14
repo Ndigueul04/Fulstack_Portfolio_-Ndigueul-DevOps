@@ -121,6 +121,19 @@ pipeline {
                 echo '✅ Déploiement Kubernetes réussi !'
             }
         }
+
+        stage('Terraform') {
+            steps {
+                echo '🏗️ Déploiement avec Terraform...'
+                sh '''
+                    cd terraform/k8s
+                    terraform init
+                    terraform plan -out=tfplan
+                    terraform apply -auto-approve tfplan
+                '''
+                echo '✅ Terraform appliqué avec succès !'
+            }
+        }
     }
 
     post {
