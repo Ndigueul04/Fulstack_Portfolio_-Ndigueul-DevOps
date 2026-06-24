@@ -1,0 +1,71 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: portfolio-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    # ─── ALERTES PODS ──────────────────────────────
+    - name: pods.rules
+      rules:
+        - alert: PodDown
+          expr: kube_pod_status_phase{phase="Failed"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} est down"
+            description: "Le pod {{ $labels.pod }} dans le namespace {{ $labels.namespace }} est en état Failed."
+
+        - alert: PodRestarting
+          expr: rate(kube_pod_container_status_restarts_total[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} redémarre souvent"
+            description: "Le pod {{ $labels.pod }} redémarre fréquemment."
+
+    # ─── ALERTES SYSTEME ───────────────────────────
+    - name: system.rules
+      rules:
+        - alert: HighCPUUsage
+          expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPU élevé sur {{ $labels.instance }}"
+            description: "L'utilisation CPU dépasse 80% depuis 2 minutes."
+
+        - alert: HighMemoryUsage
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Mémoire élevée sur {{ $labels.instance }}"
+            description: "L'utilisation mémoire dépasse 85% depuis 2 minutes."
+
+    # ─── ALERTES NAMESPACE PORTFOLIO ───────────────
+    - name: portfolio.rules
+      rules:
+        - alert: PortfolioBackendDown
+          expr: kube_deployment_status_replicas_available{deployment="backend", namespace="portfolio"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backend portfolio est down"
+            description: "Aucun replica du backend portfolio n'est disponible."
+
+        - alert: PortfolioFrontendDown
+          expr: kube_deployment_status_replicas_available{deployment="frontend", namespace="portfolio"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Frontend portfolio est down"
+            description: "Aucun replica du frontend portfolio n'est disponible."
