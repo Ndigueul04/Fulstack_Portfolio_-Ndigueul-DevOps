@@ -134,6 +134,33 @@ pipeline {
                 echo '✅ Terraform appliqué avec succès !'
             }
         }
+
+        stage('Deploy Monitoring') {
+            steps {
+                echo '📊 Déploiement Prometheus + Grafana...'
+                sh '''
+                    # Créer le namespace monitoring si inexistant
+                    kubectl --kubeconfig=/var/jenkins_home/.kube/config \
+                        get namespace monitoring || \
+                        kubectl --kubeconfig=/var/jenkins_home/.kube/config \
+                        create namespace monitoring
+                '''
+                sh '''
+                    # Installer ou mettre à jour le stack Prometheus/Grafana
+                    helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+                        --namespace monitoring \
+                        --set grafana.adminPassword=admin123 \
+                        --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+                        --wait --timeout 5m
+                '''
+                sh '''
+                    # Appliquer les règles d alertes
+                    kubectl --kubeconfig=/var/jenkins_home/.kube/config \
+                        apply -f terraform/k8s/alerting-rules.yaml
+                '''
+                echo '✅ Monitoring déployé avec succès !'
+            }
+        }
     }
 
     post {
